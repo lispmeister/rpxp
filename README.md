@@ -18,7 +18,7 @@ Please raise any issues on the [GitHub issue tracker](https://github.com/lispmei
 * commands in the container are run as the calling user, so that any created files have the expected ownership (ie. not root)
 * make variables (`CC`, `LD` etc) are set to point to the appropriate tools in the container
 * `ARCH`, `CROSS_COMPILE` and `HOST` environment variables are set in the container
-* symlinks such as `rpxp-pony` and `rpxp` are created in `/usr/local/bin`
+* symlinks such as `rpxp-ponyc` are created in `/usr/local/bin`
 * current directory is mounted as the container's workdir, `/build`
 * works with boot2docker on OSX
 
@@ -95,7 +95,7 @@ Build the Makefile in the current directory.
 
 ---
 
-`rpxp rpxp-pony -o hello-world hello-world.c`
+`rpxp rpxp-ponyc -o hello-world hello-world.c`
 
 Standard bintools are available by adding an `rpxp-` prefix.
 
