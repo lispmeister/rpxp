@@ -139,7 +139,7 @@ if [ -n "$user" ]; then
         exit 1
     fi
 
-    useradd -f -M -g "$group" $sup_g -u "$uid" "$user"
+    useradd -M -g "$group" $sup_g -u "$uid" "$user"
     if [ $? -ne 0 ]; then
         echo "$this_program: error adding user: $?" >&2
         exit 1
