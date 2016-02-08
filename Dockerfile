@@ -8,6 +8,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     automake \
     autotools-dev \
     build-essential \
+    file \
     g++-multilib \
     gcc-multilib \
     git \
@@ -47,11 +48,12 @@ RUN git clone https://github.com/ponylang/ponyc.git ponyc
 WORKDIR /build/ponyc
 RUN patch -p0 < /build/pony/ponyc_cross_compiler.patch
 
-RUN CXX="g++ -m32" make bits=32 verbose=true ponyc
+RUN CXX="g++ -m32" make config=debug bits=32 verbose=true ponyc
 
 RUN make install
 RUN which ponyc
-RUN ls -l /usr/local/bin/ponyc
+RUN file /usr/local/bin/ponyc
+RUN file /usr/local/lib/pony/0.2.1-484-g298b292/bin/ponyc
 
 RUN mkdir /data
 WORKDIR /data

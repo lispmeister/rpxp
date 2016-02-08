@@ -55,6 +55,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     automake \
     autotools-dev \
     build-essential \
+    file \
     g++-multilib \
     gcc-multilib \
     git \
@@ -220,7 +221,7 @@ Build hacked =ponyc= (based on:
 https://bluishcoder.co.nz/2015/12/17/cross-compile-pony-programs-for-android.html)
 for cross compiling pony code for armhf:
 #+BEGIN_SRC docker :tangle Dockerfile :padline yes
-RUN CXX="g++ -m32" make bits=32 verbose=true ponyc
+RUN CXX="g++ -m32" make config=debug bits=32 verbose=true ponyc
 #+END_SRC
 
 ** Install Pony Binary
@@ -230,8 +231,9 @@ convenience script to call the compiler from outside the container.
 
 #+BEGIN_SRC docker :tangle Dockerfile :padline yes
 RUN make install
-RUN which ponyc
-RUN ls -l /usr/local/bin/ponyc
+# RUN which ponyc
+# RUN file /usr/local/bin/ponyc
+# RUN file /usr/local/lib/pony/0.2.1-484-g298b292/bin/ponyc
 
 RUN mkdir /data
 WORKDIR /data
