@@ -1,0 +1,4 @@
+#!/bin/bash
+docker run --rm -it -v $(pwd):$(pwd) -w $(pwd) \
+       lispmeister/rpxp -U fix -u 1000 -G fix \
+       -g 1000 /usr/bin/llc "$@"

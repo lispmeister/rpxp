@@ -31,7 +31,6 @@ ENV PATH=/build/rpi-tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x6
 RUN ls /build/rpi-tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin
 
 RUN mkdir -p /build/pony
-RUN mkdir -p /build/arm
 WORKDIR /build/arm
 RUN git clone https://github.com/ponylang/ponyc.git
 
@@ -52,8 +51,8 @@ RUN CXX="g++ -m32" make config=debug bits=32 verbose=true ponyc
 
 RUN make install
 RUN which ponyc
-RUN file /usr/local/bin/ponyc
-RUN file /usr/local/lib/pony/0.2.1-484-g298b292/bin/ponyc
+RUN which llvm-as
+RUN which llc
 
 RUN mkdir /data
 WORKDIR /data

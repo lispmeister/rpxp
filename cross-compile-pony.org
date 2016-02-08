@@ -113,7 +113,6 @@ index fdae42b..f81e854 100644
 ** Fetch
 #+BEGIN_SRC docker :tangle Dockerfile :padline yes
 RUN mkdir -p /build/pony
-RUN mkdir -p /build/arm
 WORKDIR /build/arm
 RUN git clone https://github.com/ponylang/ponyc.git
 #+END_SRC
@@ -231,9 +230,9 @@ convenience script to call the compiler from outside the container.
 
 #+BEGIN_SRC docker :tangle Dockerfile :padline yes
 RUN make install
-# RUN which ponyc
-# RUN file /usr/local/bin/ponyc
-# RUN file /usr/local/lib/pony/0.2.1-484-g298b292/bin/ponyc
+RUN which ponyc
+RUN which llvm-as
+RUN which llc
 
 RUN mkdir /data
 WORKDIR /data
@@ -241,9 +240,62 @@ COPY runasuser.sh /root/
 ENTRYPOINT ["/root/runasuser.sh"]
 #+END_SRC
 
+* Test Cross Compile Container
 
+** Helloworld
+Here's a sample Pony program.
+#+BEGIN_SRC pony :tangle main.pony :padline yes
+actor Main
+  new create(env: Env) =>
+    env.out.print("Hello, world!")
 
+#+END_SRC
 
+** The ARM GCC Wrapper
+#+BEGIN_SRC sh :tangle arm-linux-gnueabihf-gcc :shebang "#!/bin/bash" :padline yes
+GCC="/build/rpi-tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf-gcc"
+# run the container as a user to simplify writing files outside the container
+docker run --rm -it -v $(pwd):$(pwd) -w $(pwd) lispmeister/rpxp -U fix -u 1000 -G fix -g 1000  $GCC "$@"
+#+END_SRC
+
+** The LLVM Wrapper
+#+BEGIN_SRC sh :tangle llvm-as :shebang "#!/bin/bash" :padline yes
+docker run --rm -it -v $(pwd):$(pwd) -w $(pwd) \
+       lispmeister/rpxp -U fix -u 1000 -G fix \
+       -g 1000 /usr/bin/llvm-as "$@"
+#+END_SRC
+
+** The LLC Wrapper
+#+BEGIN_SRC sh :tangle llc :shebang "#!/bin/bash" :padline yes
+docker run --rm -it -v $(pwd):$(pwd) -w $(pwd) \
+       lispmeister/rpxp -U fix -u 1000 -G fix \
+       -g 1000 /usr/bin/llc "$@"
+#+END_SRC
+
+** The Build Script
+#+BEGIN_SRC sh :tangle build.sh :shebang "#!/bin/bash" :padline yes
+./ponyc --triple arm-linux-gnueabihf -rir
+
+./llvm-as rpxp.ll
+./llc -mtriple=arm-linux-gnueabihf \
+      rpxp.bc \
+      -o rpxp.o \
+      -filetype=obj
+
+./arm-linux-gnueabihf-gcc -v \
+        -o ./helloworld \
+        -O3 -march=armv7-a -flto -fuse-linker-plugin \
+        -fuse-ld=gold \
+        ./rpxp.o \
+        -L"/usr/local/lib" \
+        -L"/home/vagrant/arm/ponyc/build/debug/" \
+        -L"/home/vagrant/arm/ponyc/build/debug/../../packages" \
+        -L"/usr/local/lib" \
+        -Wl,--start-group \
+        -l"rt" \
+        -Wl,--end-group  \
+        -lponyrt -lpthread -ldl -lm
+#+END_SRC
 
 
 
