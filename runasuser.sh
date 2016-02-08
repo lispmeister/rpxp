@@ -133,13 +133,13 @@ if [ -n "$user" ]; then
         sup_g="-G $supplemental"
     fi
 
-    groupadd -g "$gid" "$group"
+    groupadd -f -g "$gid" "$group"
     if [ $? -ne 0 ]; then
         echo "$this_program: error adding group: $?" >&2
         exit 1
     fi
 
-    useradd -M -g "$group" $sup_g -u "$uid" "$user"
+    useradd -f -M -g "$group" $sup_g -u "$uid" "$user"
     if [ $? -ne 0 ]; then
         echo "$this_program: error adding user: $?" >&2
         exit 1

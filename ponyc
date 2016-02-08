@@ -1,4 +1,9 @@
 #!/bin/bash
 
 # run the container as a user to simplify writing files outside the container
-docker run --rm -it -v $(pwd):$(pwd) -w $(pwd) lispmeister/rpxp -U `id -u -n` -u `id -u` -G `id -g -n` -g `id -g` /build/build.sh "$@"
+docker run --rm -it -v $(pwd):$(pwd) -w $(pwd) lispmeister/rpxp \
+       -U `id -u -n` \
+       -u `id -u` \
+       -G `id -g -n` \
+       -g `id -g` \
+       /build/build.sh "$@"
