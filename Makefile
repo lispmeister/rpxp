@@ -17,7 +17,8 @@ test:
 	docker run --rm $(DOCKER_IMAGE_TAGNAME) echo 'Success.'
 
 version:
-	docker run --rm $(DOCKER_IMAGE_TAGNAME) rpxp-ponyc --version
+	ponyc --version
+
 
 exited := $(shell docker ps -a -q -f status=exited)
 untagged := $(shell (docker images | grep "^<none>" | awk -F " " '{print $$3}'))
@@ -28,10 +29,6 @@ ifneq ($(strip $(exited)),)
 	@echo "Cleaning exited containers: $(exited)"
 	docker rm -v $(exited)
 endif
-# ifneq ($(strip $(untagged)),)
-# 	@echo "Cleaning untagged images: $(untagged)"
-# 	docker rmi $(untagged)
-# endif
 ifneq ($(strip $(dangling)),)
 	@echo "Cleaning dangling images: $(dangling)"
 	docker rmi $(dangling)

@@ -1,115 +1,69 @@
-# Raspberry Pi cross-compilation for Pony in a Docker container.
+# Pony (Intel to ARM) Cross Compiler
 
-Installs
-[the Raspberry Pi cross-compilation Pony toolchain](https://github.com/ponylang/ponyc)
-onto the
-[ubuntu:trusty Docker image](https://registry.hub.docker.com/_/ubuntu/).
+## Purpose
 
-This project is available as
-[lispmeister/rpxp](https://registry.hub.docker.com/u/lispmeister/rpxp)
-on [Docker Hub](https://hub.docker.com/), and as
-[lispmeister/rpxp](https://github.com/lispmeister/rpxp) on [GitHub](https://github.com).
+This ``Dockerfile`` creates a sandboxed, runnable `Pony Compiler
+<http://ponylang.org>`_ environment based on the latest commit to master
+on GitHub. We are cross compiling to the armhf (Raspberry Pi) platform.
 
-Please raise any issues on the [GitHub issue tracker](https://github.com/lispmeister/rpxp).
+## Credits
 
-## Features
+This project was inspired by
+https://github.com/rbrewer123/docker_ponyc
 
-* the gcc-linaro-arm-linux-gnueabihf-raspbian toolchain from [raspberrypi/tools](https://github.com/raspberrypi/tools)
-* commands in the container are run as the calling user, so that any created files have the expected ownership (ie. not root)
-* make variables (`CC`, `LD` etc) are set to point to the appropriate tools in the container
-* `ARCH`, `CROSS_COMPILE` and `HOST` environment variables are set in the container
-* symlinks such as `rpxp-ponyc` are created in `/usr/local/bin`
-* current directory is mounted as the container's workdir, `/build`
-* works with boot2docker on OSX
 
-## Installation
+## Requirements
 
-This image is not intended to be run manually. Instead, there is a helper script which comes bundled with the image.
+This is tested with the following software:
 
-To install the helper script, run the image with no arguments, and redirect the output to a file.
+* llvm-3.6
+* docker 1.9.0 (running on OSX 10.11.2)
 
-eg.
-```
-docker run lispmeister/rpxp > rpxp
-chmod +x rpxp
-mv rpxp ~/bin/
-```
+Since its main dependency is docker, it should run on any platform with
+docker installed (e.g. OS X).  It may or may not work with earlier
+versions of docker.  To install docker on your system, see the official
+`docker installation instructions <https://docs.docker.com/installation>`_.
 
-## Usage
 
-`rpxp [command] [args...]`
+Installation
+##############
 
-Execute the given command-line inside the container.
+To build the docker image::
 
-If the command matches one of the rpxc built-in commands (see below), that will be executed locally, otherwise the command is executed inside the container.
+  make build
 
----
+To test your new image::
 
-`rpxp -- [command] [args...]`
+  make test
+  make version
 
-To force a command to run inside the container (in case of a name clash with a built-in command), use `--` before the command.
+To push your new image::
 
-### Built-in commands
+  make push
 
-`rpxp update-image`
+You can see your new image with this command::
 
-Fetch the latest version of the docker image.
+  docker images
 
----
+Grab the ``ponyc`` script from github like this::
 
-`rpxp update-script`
+  git clone https://github.com/lispmeister/rpxp
 
-Update the installed rpxp script with the one bundled in the image.
+Now update the ``rpxp/ponyc`` script to use your correct
+``username``, ``uid``, ``group``, and ``gid``.  This avoids problems with
+files being owned by root or other permissions problems that often occur
+when using docker in this manner.
 
-----
 
-`rpxp update`
+## Run
 
-Update both the docker image, and the rpxp script.
 
-## Configuration
+To run ``ponyc`` from within the container, simply run the ``ponyc`` script::
 
-The following command-line options and environment variables are used. In all cases, the command-line option overrides the environment variable.
+  rpxp/ponyc --help
 
-### RPXP_CONFIG / --config &lt;path-to-config-file&gt;
 
-This file is sourced if it exists.
+## Limitations 
 
-Default: `~/.rpxp`
+If you discover any limitations or bugs, please submit a GitHub issue.
 
-### RPXP_IMAGE / --image &lt;docker-image-name&gt;
-
-The docker image to run.
-
-Default: sdt4docker/raspberry-pi-cross-compiler
-
-### RPXP_ARGS / --args &lt;docker-run-args&gt;
-
-Extra arguments to pass to the `docker run` command.
-
-## Examples
-
-`rpxp make`
-
-Build the Makefile in the current directory.
-
----
-
-`rpxp rpxp-ponyc -o hello-world hello-world.c`
-
-Standard bintools are available by adding an `rpxp-` prefix.
-
----
-
-`rpxp bash -c 'find . -name \*.o | sort > objects.txt'`
-
-Note that commands are executed verbatim. If you require any shell processing for environment variable expansion or redirection, please use `bash -c 'command args...'`.
-
----
-
-More examples can be found in the [examples directory](examples).
-
-## Acknowledgements
-This project is loosly based on
-[sdt4docker/raspberry-pi-cross-compiler](https://github.com/sdt/docker-raspberry-pi-cross-compiler)
-by Stephen Thirlwall.
