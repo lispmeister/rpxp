@@ -8,6 +8,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     automake \
     autotools-dev \
     build-essential \
+    file \
     g++-multilib \
     gcc-multilib \
     git \
@@ -23,20 +24,20 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     software-properties-common
-RUN add-apt-repository -y ppa:linaro-maintainers/toolchain
 RUN dpkg --add-architecture armhf
 RUN grep -i '^deb http' /etc/apt/sources.list | \
     sed -e 's/archive/ports/' -e 's!/ubuntu!/ubuntu-ports!' \
     -e 's/deb http/deb [arch=armhf] http/' | \
     tee /etc/apt/sources.list.d/armhf.list
+RUN sed -i -e 's/deb http/deb [arch=amd64,i386] http/' /etc/apt/sources.list
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libicu-dev:armhf \
     libncurses5-dev:armhf \
     libxml2-dev:armhf \
-    llvm-3.6:armhf \
-    llvm:armhf \
     zlib1g-dev:armhf
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+RUN add-apt-repository -y ppa:linaro-maintainers/toolchain
+# hack to make apt-get update not fail due to ppa not having proper Packages files
+RUN (apt-get update || true) && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     gcc-arm-linux-gnueabihf \
     g++-arm-linux-gnueabihf
 
@@ -46,7 +47,7 @@ RUN rm -rf /build/*
 RUN mkdir -p /build/pony
 RUN mkdir -p /build/arm
 WORKDIR /build/arm
-RUN git clone https://github.com/ponylang/ponyc.git
+RUN git clone https://github.com/ponylang/ponyc.git ponyc
 
 WORKDIR /build/arm/ponyc
 COPY ponyc_armcc.patch /build/pony
@@ -55,10 +56,24 @@ RUN patch -p0 < /build/pony/ponyc_armcc.patch
 RUN CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ \
     make arch=armv7-a bits=32 verbose=true libponyrt
 
-rm -rf /home/vagrant/ponyc
-cd /home/vagrant
-git clone https://github.com/ponylang/ponyc.git
-cd /home/vagrant/ponyc
-patch -p0 < /vagrant/pony/ponyc_cross_compiler.patch
+WORKDIR /build
+COPY ponyc_cross_compiler.patch /build/pony
+RUN git clone https://github.com/ponylang/ponyc.git ponyc
+WORKDIR /build/ponyc
+RUN patch -p0 < /build/pony/ponyc_cross_compiler.patch
 
-CXX="g++ -m32" make bits=32 verbose=true ponyc
+RUN CXX="g++ -m32" make bits=32 verbose=true ponyc
+
+RUN make install
+RUN which ponyc
+RUN file /usr/local/bin/ponyc
+RUN file /usr/local/lib/pony/0.2.1-484-g298b292/bin/ponyc
+
+RUN mkdir /data
+WORKDIR /data
+COPY runasuser.sh /root/ 
+COPY build.sh /build/ 
+RUN chmod ugo+x /build/*.sh
+ENTRYPOINT ["/root/runasuser.sh"]
+
+
