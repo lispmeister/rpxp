@@ -69,32 +69,19 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     zlib1g-dev:i386 
 #+END_SRC
 
-** Install GCC Cross Compiler for ARM
-#+BEGIN_SRC docker :tangle Dockerfile :padline yes
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    software-properties-common
-RUN add-apt-repository -y ppa:linaro-maintainers/toolchain
-RUN dpkg --add-architecture armhf
-RUN grep -i '^deb http' /etc/apt/sources.list | \
-    sed -e 's/archive/ports/' -e 's!/ubuntu!/ubuntu-ports!' \
-    -e 's/deb http/deb [arch=armhf] http/' | \
-    tee /etc/apt/sources.list.d/armhf.list
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    libicu-dev:armhf \
-    libncurses5-dev:armhf \
-    libxml2-dev:armhf \
-    llvm-3.6:armhf \
-    llvm:armhf \
-    zlib1g-dev:armhf
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    gcc-arm-linux-gnueabihf \
-    g++-arm-linux-gnueabihf
-#+END_SRC
-
 ** Cleanup
 Save some space on the image by removing the apt cache.
 #+BEGIN_SRC docker :tangle Dockerfile :padline yes
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+#+END_SRC
+
+** Install GCC Cross Compiler for ARM
+#+BEGIN_SRC docker :tangle Dockerfile :padline yes
+RUN mkdir -p /build
+WORKDIR /build
+RUN git clone git://github.com/raspberrypi/tools.git rpi-tools
+ENV PATH=/build/rpi-tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin:$PATH
+RUN ls /build/rpi-tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin
 #+END_SRC
 
 ** Create Patches
@@ -124,7 +111,6 @@ index fdae42b..f81e854 100644
 
 ** Fetch
 #+BEGIN_SRC docker :tangle Dockerfile :padline yes
-RUN rm -rf /build/*
 RUN mkdir -p /build/pony
 RUN mkdir -p /build/arm
 WORKDIR /build/arm
@@ -222,11 +208,11 @@ index 8afbd81..b9cfe7d 100644
 
 ** Patch
 #+BEGIN_SRC docker :tangle Dockerfile :padline yes
-rm -rf /home/vagrant/ponyc
-cd /home/vagrant
-git clone https://github.com/ponylang/ponyc.git
-cd /home/vagrant/ponyc
-patch -p0 < /vagrant/pony/ponyc_cross_compiler.patch
+WORKDIR /build
+COPY ponyc_cross_compiler.patch /build/pony
+RUN git clone https://github.com/ponylang/ponyc.git ponyc
+WORKDIR /build/ponyc
+RUN patch -p0 < /build/pony/ponyc_cross_compiler.patch
 #+END_SRC
 
 ** Build
@@ -234,7 +220,7 @@ Build hacked =ponyc= (based on:
 https://bluishcoder.co.nz/2015/12/17/cross-compile-pony-programs-for-android.html)
 for cross compiling pony code for armhf:
 #+BEGIN_SRC docker :tangle Dockerfile :padline yes
-CXX="g++ -m32" make bits=32 verbose=true ponyc
+RUN CXX="g++ -m32" make bits=32 verbose=true ponyc
 #+END_SRC
 
 ** Install Pony Binary
@@ -242,6 +228,16 @@ We'd like to have a minimized container. Do a bit of cleanup (removing
 Pony sources) and then install the compiler and rt library. Add a
 convenience script to call the compiler from outside the container.
 
+#+BEGIN_SRC docker :tangle Dockerfile :padline yes
+RUN make install
+RUN which ponyc
+RUN ls -l /usr/local/bin/ponyc
+
+RUN mkdir /data
+WORKDIR /data
+COPY runasuser.sh /root/ 
+ENTRYPOINT ["/root/runasuser.sh"]
+#+END_SRC
 
 
 

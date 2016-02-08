@@ -23,8 +23,18 @@ version:
 exited := $(shell docker ps -a -q -f status=exited)
 untagged := $(shell (docker images | grep "^<none>" | awk -F " " '{print $$3}'))
 dangling := $(shell docker images -f "dangling=true" -q)
+tag := $(shell docker images | grep "$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_VERSION)" | awk -F " " '{print $$3}')
+latest := $(shell docker images | grep "$(DOCKER_IMAGE_NAME)" | awk -F " " '{print $$3}')
 
 clean:
+ifneq ($(strip $(tag)),)
+	@echo "Removing $(tag) image"
+	docker rmi "$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_VERSION)")
+endif
+ifneq ($(strip $(latest)),)
+	@echo "Removing $(latest) image"
+	docker rmi $(latest)
+endif
 ifneq ($(strip $(exited)),)
 	@echo "Cleaning exited containers: $(exited)"
 	docker rm -v $(exited)
