@@ -59,12 +59,6 @@ Grab the ``ponyc`` script from github like this::
   git clone https://github.com/lispmeister/rpxp
 ```
 
-Now update the ``rpxp/ponyc`` script to use your correct
-``username``, ``uid``, ``group``, and ``gid``.  This avoids problems with
-files being owned by root or other permissions problems that often occur
-when using docker in this manner.
-
-
 ## Run
 
 
