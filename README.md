@@ -30,30 +30,34 @@ Installation
 
 To build the docker image::
 
+```
   make build
+```
 
 To test your new image::
 
+``` 
   make test
   make version
+```
 
 To push your new image::
 
+```
   make push
+```
 
 You can see your new image with this command::
 
+```
   docker images
+```
 
 Grab the ``ponyc`` script from github like this::
 
+```
   git clone https://github.com/lispmeister/rpxp
-
-Now update the ``rpxp/ponyc`` script to use your correct
-``username``, ``uid``, ``group``, and ``gid``.  This avoids problems with
-files being owned by root or other permissions problems that often occur
-when using docker in this manner.
-
+```
 
 ## Run
 
