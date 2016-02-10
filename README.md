@@ -25,8 +25,7 @@ versions of docker.  To install docker on your system, see the official
 `docker installation instructions <https://docs.docker.com/installation>`_.
 
 
-Installation
-##############
+## Installation
 
 To build the docker image::
 
