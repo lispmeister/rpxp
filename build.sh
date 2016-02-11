@@ -17,8 +17,7 @@ arm-linux-gnueabihf-gcc -v \
         ${module_name}.o \
         -L"/usr/local/lib" \
         -L"/build/arm/ponyc/build/debug/" \
-        -L"/build/arm/ponyc//build/debug/../../packages" \
-        -L"/usr/local/lib" \
+        -L"/build/arm/ponyc/build/debug/../../packages" \
         -Wl,--start-group \
         -l"rt" \
         -Wl,--end-group  \

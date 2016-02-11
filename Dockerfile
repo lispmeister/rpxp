@@ -65,9 +65,8 @@ RUN patch -p0 < /build/pony/ponyc_cross_compiler.patch
 RUN CXX="g++ -m32" make bits=32 verbose=true ponyc
 
 RUN make install
-RUN which ponyc
-RUN file /usr/local/bin/ponyc
-RUN file /usr/local/lib/pony/0.2.1-484-g298b292/bin/ponyc
+
+RUN rm -rf /build/ponyc && rm -rf /build/pony
 
 RUN mkdir /data
 WORKDIR /data
