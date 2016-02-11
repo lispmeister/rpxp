@@ -2,13 +2,7 @@
 
 module_name=$(basename `pwd`)
 
-ponyc --triple arm-linux-gnueabihf -rir
-
-llvm-as ${module_name}.ll
-llc -mtriple=arm-linux-gnueabihf \
-      ${module_name}.bc \
-      -o ${module_name}.o \
-      -filetype=obj
+ponyc --triple arm-unknown-linux-gnueabihf -robj
 
 arm-linux-gnueabihf-gcc -v \
         -o ${module_name} \

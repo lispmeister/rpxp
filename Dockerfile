@@ -3,8 +3,13 @@ MAINTAINER Markus Fix <lispmeister@gmail.com>
 
 RUN echo "Is this a 32 or 64 bit platform: `/usr/bin/getconf LONG_BIT`"
 
-RUN dpkg --add-architecture i386
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+RUN dpkg --add-architecture armhf && \
+    grep -i '^deb http' /etc/apt/sources.list | \
+    sed -e 's/archive/ports/' -e 's!/ubuntu!/ubuntu-ports!' \
+    -e 's/deb http/deb [arch=armhf] http/' | \
+    tee /etc/apt/sources.list.d/armhf.list && \
+    sed -i -e 's/deb http/deb [arch=amd64,i386] http/' /etc/apt/sources.list && \
+    apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     automake \
     autotools-dev \
     build-essential \
@@ -12,61 +17,46 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     g++-multilib \
     gcc-multilib \
     git \
-    libicu-dev:i386 \
+    libicu-dev \
     libncurses5-dev \
-    libncurses5-dev:i386 \
     libpcre3 \
     libssl-dev \
-    libxml2-dev:i386 \
-    llvm-3.6:i386 \
-    llvm:i386 \
-    zlib1g-dev:i386 
-
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    software-properties-common
-RUN dpkg --add-architecture armhf
-RUN grep -i '^deb http' /etc/apt/sources.list | \
-    sed -e 's/archive/ports/' -e 's!/ubuntu!/ubuntu-ports!' \
-    -e 's/deb http/deb [arch=armhf] http/' | \
-    tee /etc/apt/sources.list.d/armhf.list
-RUN sed -i -e 's/deb http/deb [arch=amd64,i386] http/' /etc/apt/sources.list
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    libxml2-dev \
+    llvm-3.6 \
+    llvm \
+    zlib1g-dev \
+    software-properties-common \
     libicu-dev:armhf \
     libncurses5-dev:armhf \
     libxml2-dev:armhf \
-    zlib1g-dev:armhf
-RUN add-apt-repository -y ppa:linaro-maintainers/toolchain
+    zlib1g-dev:armhf && \
+    add-apt-repository -y ppa:linaro-maintainers/toolchain && \
 # hack to make apt-get update not fail due to ppa not having proper Packages files
-RUN (apt-get update || true) && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    (apt-get update || true) && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     gcc-arm-linux-gnueabihf \
-    g++-arm-linux-gnueabihf
-
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+    g++-arm-linux-gnueabihf && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get clean
 
 RUN rm -rf /build/*
 RUN mkdir -p /build/pony
 RUN mkdir -p /build/arm
 WORKDIR /build/arm
-RUN git clone https://github.com/ponylang/ponyc.git ponyc
+RUN git  clone https://github.com/dipinhora/ponyc.git ponyc
 
 WORKDIR /build/arm/ponyc
-COPY ponyc_armcc.patch /build/pony
-RUN patch -p0 < /build/pony/ponyc_armcc.patch
+RUN git checkout cross_compiling
 
 RUN CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ \
     make arch=armv7-a bits=32 verbose=true libponyrt
 
 WORKDIR /build
-COPY ponyc_cross_compiler.patch /build/pony
-RUN git clone https://github.com/ponylang/ponyc.git ponyc
-WORKDIR /build/ponyc
-RUN patch -p0 < /build/pony/ponyc_cross_compiler.patch
-
-RUN CXX="g++ -m32" make bits=32 verbose=true ponyc
-
-RUN make install
-
-RUN rm -rf /build/ponyc && rm -rf /build/pony
+RUN git clone https://github.com/dipinhora/ponyc.git ponyc && \
+    cd /build/ponyc && \
+    git checkout cross_compiling && \
+    make verbose=true ponyc && \
+    make install && \
+    rm -rf /build/ponyc && rm -rf /build/pony
 
 RUN mkdir /data
 WORKDIR /data
