@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# run the container as a user to simplify writing files outside the container
+docker run --rm -it -v $(pwd):$(pwd) -w $(pwd) lispmeister/rpxp \
+       -U `id -u -n` \
+       -u 1000 \
+       -G `id -g -n` \
+       -g 1000 \
+       ponyc "$@"
