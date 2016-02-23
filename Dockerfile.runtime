@@ -1,0 +1,25 @@
+FROM ubuntu:vivid
+MAINTAINER Markus Fix <lispmeister@gmail.com>
+
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    software-properties-common && \
+    add-apt-repository -y ppa:linaro-maintainers/toolchain && \
+# hack to make apt-get update not fail due to ppa not having proper Packages files
+    (apt-get update || true) && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    gcc-arm-linux-gnueabihf \
+    gcc && \
+    apt-get -y autoremove software-properties-common && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get -y autoclean && \
+    apt-get -y autoremove --purge && \
+    apt-get -y clean
+
+COPY build /build
+
+RUN mkdir /data
+WORKDIR /data
+COPY runasuser.sh /root/ 
+COPY build.sh /build/ 
+RUN chmod ugo+x /build/*.sh
+ENTRYPOINT ["/root/runasuser.sh"]
+

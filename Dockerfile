@@ -25,6 +25,7 @@ RUN dpkg --add-architecture armhf && \
     llvm-3.6 \
     llvm \
     zlib1g-dev \
+    curl \
     software-properties-common \
     libicu-dev:armhf \
     libncurses5-dev:armhf \
@@ -36,33 +37,47 @@ RUN dpkg --add-architecture armhf && \
     gcc-arm-linux-gnueabihf \
     g++-arm-linux-gnueabihf && \
     rm -rf /var/lib/apt/lists/* && \
-    apt-get clean
+    apt-get -y autoremove --purge && \
+    apt-get -y clean
+
+RUN mkdir -p /tmp/pcre-src && \
+    curl -SL -o /tmp/pcre-src/repo.tbz2 ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre2-10.20.tar.bz2 && \
+    tar xf /tmp/pcre-src/repo.tbz2 -C /tmp/pcre-src && \
+    ln -s /tmp/pcre-src/*pcre* /tmp/pcre-src/pcre && \
+    cd /tmp/pcre-src/pcre && \
+    ./configure --prefix=/usr && \
+    make && \
+    make install && \
+    rm -r /tmp/pcre-src/*pcre*
+
+ARG PONYC_CONFIG=debug
+ENV PONYC_CONFIG ${PONYC_CONFIG}
 
 RUN rm -rf /build/*
 RUN mkdir -p /build/pony
 RUN mkdir -p /build/arm
 WORKDIR /build/arm
-RUN git  clone https://github.com/dipinhora/ponyc.git ponyc
+RUN git clone https://github.com/ponylang/ponyc.git ponyc
 
 WORKDIR /build/arm/ponyc
-RUN git checkout cross_compiling
 
 RUN CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ \
-    make arch=armv7-a bits=32 verbose=true libponyrt
+    make arch=armv7-a bits=32 config=${PONYC_CONFIG} libponyrt
 
 WORKDIR /build
-RUN git clone https://github.com/dipinhora/ponyc.git ponyc && \
+RUN git clone https://github.com/ponylang/ponyc.git ponyc && \
     cd /build/ponyc && \
-    git checkout cross_compiling && \
-    make verbose=true ponyc && \
-    make install && \
-    rm -rf /build/ponyc && rm -rf /build/pony
+    make config=${PONYC_CONFIG} ponyc && \
+    make config=${PONYC_CONFIG} test && \
+    rm -f /build/ponyc/build/${PONYC_CONFIG}/libgtest.a && \
+    rm -f /build/ponyc/build/${PONYC_CONFIG}/libponyc.tests && \
+    rm -f /build/ponyc/build/${PONYC_CONFIG}/libponyrt-pic.a && \
+    rm -rf /build/ponyc/build/${PONYC_CONFIG}/obj
 
-RUN mkdir /data
-WORKDIR /data
-COPY runasuser.sh /root/ 
-COPY build.sh /build/ 
-RUN chmod ugo+x /build/*.sh
+RUN mkdir bin && \
+    cd bin && \
+    ln -s /build/ponyc/build/${PONYC_CONFIG}/ponyc .
+
+COPY runasuser.sh /root/
 ENTRYPOINT ["/root/runasuser.sh"]
-
 

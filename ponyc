@@ -6,4 +6,4 @@ docker run --rm -it -v $(pwd):$(pwd) -w $(pwd) lispmeister/rpxp \
        -u 1000 \
        -G `id -g -n` \
        -g 1000 \
-       ponyc "$@"
+       /build/bin/ponyc "$@"
