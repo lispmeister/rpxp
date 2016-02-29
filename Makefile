@@ -2,12 +2,18 @@ DOCKER_IMAGE_VERSION=0.0.1
 DOCKER_IMAGE_NAME=lispmeister/rpxp
 DOCKER_IMAGE_TAGNAME=$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_VERSION)
 
+current_dir = $(shell pwd)
+config ?= debug
+
 default: build
 
 print-%  : ; @echo $* = $($*)
 
 build:
-	docker build -t $(DOCKER_IMAGE_TAGNAME) .
+	docker build --build-arg PONYC_CONFIG=$(config) -t $(DOCKER_IMAGE_TAGNAME) .
+	docker run --rm -v $(current_dir):/build-export $(DOCKER_IMAGE_TAGNAME) -U `id -u -n` -u 1000 -G `id -g -n` -g 1000 cp -r /build $(pwd)/build-export
+	docker build -t $(DOCKER_IMAGE_TAGNAME) --file=./Dockerfile.runtime .
+	rm -rf build
 	docker tag -f $(DOCKER_IMAGE_TAGNAME) $(DOCKER_IMAGE_NAME):latest
 
 push:
